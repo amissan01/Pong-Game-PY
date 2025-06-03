@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis for Two</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #282c34;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            border: 2px solid #61dafb;
+            box-shadow: 0 0 15px #61dafb;
+        }
+        .score {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2em;
+        }
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 2em;
+            display: none;
+        }
+        .game-over button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #61dafb;
+            border: none;
+            color: #282c34;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="score" id="scoreDisplay">AI: 0 | Player: 0</div>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div class="game-over" id="gameOverPanel">
+        <div id="winnerMessage">Player X Wins!</div>
+        <button onclick="restartGame()">Play Again</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const gameOverPanel = document.getElementById('gameOverPanel');
+        const winnerMessage = document.getElementById('winnerMessage');
+
+        const paddleWidth = 10, paddleHeight = 100;
+        const ballRadius = 10;
+        const paddleSpeed = 6;
+        let paddle1Y = (canvas.height - paddleHeight) / 2;
+        let paddle2Y = (canvas.height - paddleHeight) / 2;
+        let ballX = canvas.width / 2, ballY = canvas.height / 2;
+        let ballSpeedX = 4, ballSpeedY = 4;
+        let playerScore = 0, aiScore = 0;
+        const winningScore = 5;
+
+        let upPressed = false, downPressed = false;
+        
+        function drawPaddle(x, y) {
+            ctx.fillStyle = '#61dafb';
+            ctx.fillRect(x, y, paddleWidth, paddleHeight);
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff6f61';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawCenterLine() {
+            ctx.strokeStyle = '#ffffff';
+            ctx.setLineDash([10, 5]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+        }
+
+        function moveBall() {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            if (ballX - ballRadius < 0) {
+                playerScore++;
+                checkWin();
+                resetBall();
+            }
+
+            if (ballX + ballRadius > canvas.width) {
+                if (ballY > paddle2Y && ballY < paddle2Y + paddleHeight) {
+                    ballSpeedX = -Math.abs(ballSpeedX) - 0.5;
+                } else {
+                    aiScore++;
+                    checkWin();
+                    resetBall();
+                }
+            }
+
+            if (ballX - ballRadius < paddleWidth) {
+                if (ballY > paddle1Y && ballY < paddle1Y + paddleHeight) {
+                    ballSpeedX = Math.abs(ballSpeedX) + 0.5;
+                }
+            }
+        }
+
+        function moveAI() {
+            let paddleCenter = paddle1Y + paddleHeight / 2;
+            if (paddleCenter < ballY - 20) {
+                paddle1Y += paddleSpeed;
+            } else if (paddleCenter > ballY + 20) {
+                paddle1Y -= paddleSpeed;
+            }
+        }
+
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballSpeedX = (Math.random() > 0.5 ? 4 : -4);
+            ballSpeedY = (Math.random() * 4 - 2);
+        }
+
+        function checkWin() {
+            if (playerScore === winningScore || aiScore === winningScore) {
+                winnerMessage.textContent = playerScore === winningScore ? 'Player Wins!' : 'AI Wins!';
+                gameOverPanel.style.display = 'block';
+                clearInterval(gameLoop);
+            }
+            scoreDisplay.textContent = `AI: ${aiScore} | Player: ${playerScore}`;
+        }
+
+        function movePaddles() {
+            if (upPressed && paddle2Y > 0) paddle2Y -= paddleSpeed;
+            if (downPressed && paddle2Y < canvas.height - paddleHeight) paddle2Y += paddleSpeed;
+            moveAI();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPaddle(0, paddle1Y);
+            drawPaddle(canvas.width - paddleWidth, paddle2Y);
+            drawBall();
+            drawCenterLine();
+            moveBall();
+            movePaddles();
+        }
+
+        function keyDownHandler(e) {
+            if (e.key === 'ArrowUp') upPressed = true;
+            if (e.key === 'ArrowDown') downPressed = true;
+        }
+
+        function keyUpHandler(e) {
+            if (e.key === 'ArrowUp') upPressed = false;
+            if (e.key === 'ArrowDown') downPressed = false;
+        }
+
+        document.addEventListener('keydown', keyDownHandler);
+        document.addEventListener('keyup', keyUpHandler);
+
+        let gameLoop = setInterval(draw, 10);
+    </script>
+</body>
+</html>
