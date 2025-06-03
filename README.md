@@ -23,5 +23,6 @@ This is a simple Pong game where you play against an AI opponent. The ball bounc
 
 ```bash
 python pong.py
-![image](https://github.com/user-attachments/assets/1e89dbcc-625e-4399-8e53-2a91c56c9253)
+![Pong Game Screenshot](images/pong_screenshot.png)
+
 
